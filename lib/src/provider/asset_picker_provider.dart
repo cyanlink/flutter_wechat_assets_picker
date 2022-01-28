@@ -16,6 +16,7 @@ import '../delegates/sort_path_delegate.dart';
 /// The provider maintain all methods that control assets and paths.
 /// By extending it you can customize how you can get all assets or paths,
 /// how to fetch the next page of assets, how to get the thumb data of a path.
+// TODO(cyanlink): 这个基类应当扮演Model (data source)的角色，去除其中包含ViewModel和UI相关的逻辑.
 abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   AssetPickerProvider({
     this.maxAssets = 9,
@@ -108,6 +109,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
 
   /// If path switcher opened.
   /// 是否正在进行路径选择
+  // TODO(cyanlink): deprecation.
   bool _isSwitchingPath = false;
 
   bool get isSwitchingPath => _isSwitchingPath;

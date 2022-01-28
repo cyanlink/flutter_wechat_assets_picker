@@ -40,13 +40,13 @@ Future<List<AssetEntity>?> newCustomPick(BuildContext context, List<AssetEntity>
   final DAPP cap = DAPP(requestType: RequestType.common);
   final ProviderAggregate pa =
       ProviderAggregate(image: iap, video: vap, common: cap);
-
   pa.selectedAssets = selectedAssets;
   return AssetPickerExtension.pickAssetsWithDelegateAggregatedProvider(
     context,
     delegate: delegate,
     providerAggregate: pa,
   );
+
 }
 
 class ProviderAggregate extends ChangeNotifier {
@@ -116,6 +116,21 @@ class ProviderAggregate extends ChangeNotifier {
   }
 
   bool get isSelectedNotEmpty => _selectedAssets.isNotEmpty;
+
+
+  /// If path switcher opened.
+  /// 是否正在进行路径选择
+  bool _isSwitchingPath = false;
+
+  bool get isSwitchingPath => _isSwitchingPath;
+
+  set isSwitchingPath(bool value) {
+    if (value == _isSwitchingPath) {
+      return;
+    }
+    _isSwitchingPath = value;
+    notifyListeners();
+  }
 }
 
 class ImageAssetProvider extends DAPP {
@@ -427,8 +442,8 @@ class NewCustomAssetPickerBuilderDelegate
   @override
   Widget appleOSLayout(BuildContext context) {
     Widget _gridLayout(BuildContext context) {
-      return Selector<DAPP, bool>(
-        selector: (_, DAPP p) => p.isSwitchingPath,
+      return Selector<ProviderAggregate, bool>(
+        selector: (_, ProviderAggregate p) => p.isSwitchingPath,
         builder: (_, bool isSwitchingPath, __) => Semantics(
           excludeSemantics: isSwitchingPath,
           child: RepaintBoundary(
@@ -746,9 +761,9 @@ class NewCustomAssetPickerBuilderDelegate
     AssetEntity asset,
     Widget child,
   ) {
-    return Consumer<DAPP>(
+    return Consumer2<DAPP, ProviderAggregate>(
       child: child,
-      builder: (_, DAPP p, Widget? child) {
+      builder: (_, DAPP p, ProviderAggregate pa, Widget? child) {
         final bool isBanned =
             (!p.selectedAssets.contains(asset) && p.selectedMaximumAssets) ||
                 (isWeChatMoment &&
@@ -770,11 +785,11 @@ class NewCustomAssetPickerBuilderDelegate
           button: false,
           enabled: !isBanned,
           excludeSemantics: true,
-          focusable: p.isSwitchingPath,
+          focusable: pa.isSwitchingPath,
           label: '${textDelegate.semanticTypeLabel(asset.type)}'
               '${semanticIndex(index)}, '
               '${asset.createDateTime.toString().replaceAll('.000', '')}',
-          hidden: p.isSwitchingPath,
+          hidden: pa.isSwitchingPath,
           hint: hint,
           image: asset.type == AssetType.image || asset.type == AssetType.video,
           onTap: () => selectAsset(context, asset, isSelected),
@@ -1009,15 +1024,15 @@ class NewCustomAssetPickerBuilderDelegate
   /// 当选择器正在选择路径时，它会出现。用户点击它时，列表会折叠收起。
   @override
   Widget pathEntityListBackdrop(BuildContext context) {
-    final DAPP provider = context.watch<DAPP>();
+    final ProviderAggregate pa = context.watch<ProviderAggregate>();
     return Positioned.fill(
-      child: Selector<DAPP, bool>(
-        selector: (_, DAPP p) => p.isSwitchingPath,
+      child: Selector<ProviderAggregate, bool>(
+        selector: (_, ProviderAggregate p) => p.isSwitchingPath,
         builder: (_, bool isSwitchingPath, __) => IgnorePointer(
           ignoring: !isSwitchingPath,
           ignoringSemantics: true,
           child: GestureDetector(
-            onTap: () => provider.isSwitchingPath = false,
+            onTap: () => pa.isSwitchingPath = false,
             child: AnimatedOpacity(
               duration: switchingPathDuration,
               opacity: isSwitchingPath ? .75 : 0,
@@ -1035,15 +1050,15 @@ class NewCustomAssetPickerBuilderDelegate
     return Positioned.fill(
       top: isAppleOS ? context.topPadding + kToolbarHeight : 0,
       bottom: null,
-      child: Consumer<DAPP>(
-        builder: (_, DAPP p, Widget? child) => Semantics(
+      child: Consumer<ProviderAggregate>(
+        builder: (_, ProviderAggregate p, Widget? child) => Semantics(
           focusable: p.isSwitchingPath,
           sortKey: const OrdinalSortKey(1),
           hidden: !p.isSwitchingPath,
           child: child,
         ),
-        child: Selector<DAPP, bool>(
-          selector: (_, DAPP p) => p.isSwitchingPath,
+        child: Selector<ProviderAggregate, bool>(
+          selector: (_, ProviderAggregate p) => p.isSwitchingPath,
           builder: (_, bool isSwitchingPath, Widget? w) => AnimatedAlign(
             duration: switchingPathDuration,
             curve: switchingPathCurve,
@@ -1195,8 +1210,8 @@ class NewCustomAssetPickerBuilderDelegate
                   shape: BoxShape.circle,
                   color: theme.iconTheme.color!.withOpacity(0.5),
                 ),
-                child: Selector<DAPP, bool>(
-                  selector: (_, DAPP p) => p.isSwitchingPath,
+                child: Selector<ProviderAggregate, bool>(
+                  selector: (_, ProviderAggregate p) => p.isSwitchingPath,
                   builder: (_, bool isSwitchingPath, Widget? w) =>
                       Transform.rotate(
                     angle: isSwitchingPath ? math.pi : 0,
@@ -1361,8 +1376,8 @@ class NewCustomAssetPickerBuilderDelegate
     return Consumer2<ProviderAggregate, DAPP>(
       builder: (_, ProviderAggregate pa, DAPP p, Widget? child) => Semantics(
         enabled: pa.isSelectedNotEmpty,
-        focusable: p.isSwitchingPath,
-        hidden: p.isSwitchingPath,
+        focusable: pa.isSwitchingPath,
+        hidden: pa.isSwitchingPath,
         onTapHint: textDelegate.sActionPreviewHint,
         child: child,
       ),

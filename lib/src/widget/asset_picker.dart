@@ -298,7 +298,7 @@ class AssetPickerState<Asset, Path> extends State<AssetPicker<Asset, Path>>
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    AssetPicker.registerObserve(_onLimitedAssetsUpdated);
+    AssetPicker.registerObserve(widget.builder.onLimitedAssetsUpdated);
   }
 
   @override
@@ -314,7 +314,7 @@ class AssetPickerState<Asset, Path> extends State<AssetPicker<Asset, Path>>
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
-    AssetPicker.unregisterObserve(_onLimitedAssetsUpdated);
+    AssetPicker.unregisterObserve(widget.builder.onLimitedAssetsUpdated);
     // Skip delegate's dispose when it's keeping scroll offset.
     if (!widget.builder.keepScrollOffset) {
       widget.builder.dispose();
@@ -322,22 +322,6 @@ class AssetPickerState<Asset, Path> extends State<AssetPicker<Asset, Path>>
     super.dispose();
   }
 
-  Future<void> _onLimitedAssetsUpdated(MethodCall call) async {
-    if (!widget.builder.isPermissionLimited) {
-      return;
-    }
-    if (widget.builder.provider.currentPathEntity != null) {
-      final Path? _currentPathEntity =
-          widget.builder.provider.currentPathEntity;
-      if (_currentPathEntity is AssetPathEntity) {
-        await _currentPathEntity.refreshPathProperties();
-      }
-      await widget.builder.provider.switchPath(_currentPathEntity);
-      if (mounted) {
-        setState(() {});
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

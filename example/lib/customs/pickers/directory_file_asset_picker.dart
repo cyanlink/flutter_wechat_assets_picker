@@ -376,12 +376,17 @@ class FileAssetPickerProvider extends AssetPickerProvider<File, Directory> {
 class FileAssetPickerBuilder
     extends AssetPickerBuilderDelegate<File, Directory> {
   FileAssetPickerBuilder({
-    required FileAssetPickerProvider provider,
-  }) : super(provider: provider, initialPermission: PermissionState.authorized);
+    required this.provider,
+  }) : super( initialPermission: PermissionState.authorized);
 
   Duration get switchingPathDuration => kThemeAnimationDuration * 1.5;
 
   Curve get switchingPathCurve => Curves.easeInOut;
+
+  FileAssetPickerProvider provider;
+
+  @override
+  bool get isSingleAssetMode => provider.maxAssets == 1;
 
   Future<List<File>?> pushToPicker(
     BuildContext context, {
@@ -1181,6 +1186,21 @@ class FileAssetPickerBuilder
     int placeholderCount = 0,
   }) {
     return assets.indexWhere((File file) => file.path == id);
+  }
+
+  @override
+  Future<void> onLimitedAssetsUpdated(MethodCall call) async {
+    if (isPermissionLimited) {
+      return;
+    }
+    if (provider.currentPathEntity != null) {
+      final Directory _currentPathEntity =
+          provider.currentPathEntity!;
+      if (_currentPathEntity is AssetPathEntity) {
+        await (_currentPathEntity as AssetPathEntity?)?.refreshPathProperties();
+      }
+      await provider.switchPath(_currentPathEntity);
+    }
   }
 }
 

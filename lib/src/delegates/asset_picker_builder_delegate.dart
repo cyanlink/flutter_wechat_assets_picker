@@ -54,7 +54,6 @@ typedef AssetSelectPredicate<Asset> = FutureOr<bool> Function(
 ///  * [Path] The type of your paths. Defaults to [AssetPathEntity].
 abstract class AssetPickerBuilderDelegate<Asset, Path> {
   AssetPickerBuilderDelegate({
-    required this.provider,
     required this.initialPermission,
     this.gridCount = 4,
     Color? themeColor,
@@ -80,9 +79,12 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
     }
   }
 
+  Future<void> onLimitedAssetsUpdated(MethodCall call);
+
   /// [ChangeNotifier] for asset picker.
   /// 资源选择器状态保持
-  final AssetPickerProvider<Asset, Path> provider;
+  // TODO(cyanlink): 取消注释.
+  /// final AssetPickerProvider<Asset, Path> provider;
 
   /// The [PermissionState] when the picker is called.
   /// 当选择器被拉起时的权限状态
@@ -170,7 +172,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
 
   /// Whether the picker is under the single asset mode.
   /// 选择器是否为单选模式
-  bool get isSingleAssetMode => provider.maxAssets == 1;
+  bool get isSingleAssetMode;
 
   /// Space between assets item widget.
   /// 资源部件之间的间隔
@@ -661,9 +663,8 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
       value: overlayStyle,
       child: Theme(
         data: theme,
-        child: CNP<AssetPickerProvider<Asset, Path>>.value(
-          value: provider,
-          builder: (BuildContext c, __) => Material(
+        child: Builder(
+          builder: (BuildContext c) => Material(
             color: theme.canvasColor,
             child: Stack(
               fit: StackFit.expand,
@@ -682,7 +683,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
 class DefaultAssetPickerBuilderDelegate
     extends AssetPickerBuilderDelegate<AssetEntity, AssetPathEntity> {
   DefaultAssetPickerBuilderDelegate({
-    required DefaultAssetPickerProvider provider,
+    required this.provider,
     required PermissionState initialPermission,
     int gridCount = 4,
     Color? themeColor,
@@ -703,7 +704,6 @@ class DefaultAssetPickerBuilderDelegate
           'Theme and theme color cannot be set at the same time.',
         ),
         super(
-          provider: provider,
           initialPermission: initialPermission,
           gridCount: gridCount,
           themeColor: themeColor,
@@ -718,6 +718,8 @@ class DefaultAssetPickerBuilderDelegate
           shouldRevertGrid: shouldRevertGrid,
         );
 
+  DefaultAssetPickerProvider provider;
+
   /// Thumbnail size in the grid.
   /// 预览时网络的缩略图大小
   ///
@@ -730,6 +732,9 @@ class DefaultAssetPickerBuilderDelegate
   /// original data for the grid.
   /// 该值不能为空或者非常大，因为在网格中使用原数据不是一个好的决定。
   final int gridThumbSize;
+
+  @override
+  bool get isSingleAssetMode => provider.maxAssets == 1;
 
   /// Preview thumbnail size in the viewer.
   /// 预览时图片的缩略图大小
@@ -773,6 +778,22 @@ class DefaultAssetPickerBuilderDelegate
   /// Whether the preview of assets is enabled.
   /// 资源的预览是否启用
   bool get isPreviewEnabled => specialPickerType != SpecialPickerType.noPreview;
+
+  @override
+  Future<void> onLimitedAssetsUpdated(MethodCall call) async {
+    if (isPermissionLimited) {
+      return;
+    }
+    if (provider.currentPathEntity != null) {
+      final AssetPathEntity? _currentPathEntity =
+          provider.currentPathEntity ;
+      if (_currentPathEntity is AssetPathEntity) {
+        await _currentPathEntity.refreshPathProperties();
+      }
+      await provider.switchPath(_currentPathEntity);
+
+    }
+  }
 
   @override
   Future<void> selectAsset(
@@ -848,7 +869,7 @@ class DefaultAssetPickerBuilderDelegate
       themeData: theme,
       previewThumbSize: previewThumbSize,
       selectedAssets: _selected,
-      selectorProvider: provider as DefaultAssetPickerProvider,
+      selectorProvider: provider,
       specialPickerType: specialPickerType,
       maxAssets: provider.maxAssets,
       shouldReversePreview: isAppleOS,

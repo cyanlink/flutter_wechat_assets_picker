@@ -138,7 +138,7 @@ class PickMethod {
                   final AssetPicker<AssetEntity, AssetPathEntity> picker =
                       context.findAncestorWidgetOfExactType()!;
                   final DefaultAssetPickerProvider p =
-                      picker.builder.provider as DefaultAssetPickerProvider;
+                  (picker.builder as DefaultAssetPickerBuilderDelegate).provider;
                   await p.currentPathEntity!.refreshPathProperties();
                   await p.switchPath(p.currentPathEntity!);
                   p.selectAsset(result);

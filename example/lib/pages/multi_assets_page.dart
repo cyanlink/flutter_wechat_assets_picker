@@ -4,6 +4,7 @@
 ///
 import 'package:flutter/material.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import 'package:wechat_assets_picker_demo/customs/pickers/tab_switch/file_pick_page.dart';
 
 import '../constants/page_mixin.dart';
 import '../constants/picker_method.dart';
@@ -22,6 +23,12 @@ class _MultiAssetsPageState extends State<MultiAssetsPage>
   @override
   List<PickMethod> get pickMethods {
     return <PickMethod>[
+      PickMethod(
+        icon: '😀',
+        name: 'Switch type',
+        description: 'switch type with multiple tabs',
+        method:(BuildContext context, List<AssetEntity> selectedAssets)=>newCustomPick(context, selectedAssets),
+      ),
       PickMethod.common(maxAssetsCount),
       PickMethod.image(maxAssetsCount),
       PickMethod.video(maxAssetsCount),

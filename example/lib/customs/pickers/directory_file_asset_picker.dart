@@ -1189,7 +1189,7 @@ class FileAssetPickerBuilder
   }
 
   @override
-  Future<void> onLimitedAssetsUpdated(MethodCall call) async {
+  Future<void> onLimitedAssetsUpdated(MethodCall call, BuildContext context) async {
     if (isPermissionLimited) {
       return;
     }

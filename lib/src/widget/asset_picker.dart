@@ -293,12 +293,16 @@ class AssetPicker<Asset, Path> extends StatefulWidget {
 }
 
 class AssetPickerState<Asset, Path> extends State<AssetPicker<Asset, Path>>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    AssetPicker.registerObserve(widget.builder.onLimitedAssetsUpdated);
+    AssetPicker.registerObserve((MethodCall call) {
+      widget.builder.onLimitedAssetsUpdated(call, context);
+      if(mounted)
+        setState(() {});
+    });
   }
 
   @override
@@ -314,14 +318,17 @@ class AssetPickerState<Asset, Path> extends State<AssetPicker<Asset, Path>>
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
-    AssetPicker.unregisterObserve(widget.builder.onLimitedAssetsUpdated);
+    AssetPicker.unregisterObserve((MethodCall call) {
+      widget.builder.onLimitedAssetsUpdated(call, context);
+      if(mounted)
+        setState(() {});
+    });
     // Skip delegate's dispose when it's keeping scroll offset.
     if (!widget.builder.keepScrollOffset) {
       widget.builder.dispose();
     }
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {

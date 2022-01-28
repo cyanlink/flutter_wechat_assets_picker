@@ -3,6 +3,7 @@
 /// [Date] 2020-11-01 02:05
 ///
 import 'package:flutter/material.dart';
+import 'package:wechat_assets_picker_demo/customs/pickers/tab_switch/file_pick_page.dart';
 
 import '../constants/custom_pick_method.dart';
 import 'pickers/directory_file_asset_picker.dart';
@@ -19,8 +20,8 @@ class _CustomPickerPageState extends State<CustomPickersPage>
       padding: EdgeInsets.all(20.0),
       child: Text(
         'This page contains customized pickers with different asset types, '
-        'different UI layouts, or some use case for specific apps. '
-        'Contribute to add your custom picker are welcomed.',
+            'different UI layouts, or some use case for specific apps. '
+            'Contribute to add your custom picker are welcomed.',
       ),
     );
   }
@@ -33,12 +34,14 @@ class _CustomPickerPageState extends State<CustomPickersPage>
         description: 'The picker is built with `Directory` and `File` '
             'as entities, which allows users to display/select `File` '
             'through `Directory`.',
-        method: (BuildContext context) => Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(
-            builder: (_) => const DirectoryFileAssetPicker(),
-          ),
-        ),
+        method: (BuildContext context) =>
+            Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => const DirectoryFileAssetPicker(),
+              ),
+            ),
       ),
+
     ];
   }
 
@@ -103,7 +106,10 @@ class _MethodListView extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     model.description,
-                    style: Theme.of(context).textTheme.caption,
+                    style: Theme
+                        .of(context)
+                        .textTheme
+                        .caption,
                     overflow: TextOverflow.fade,
                   ),
                 ],

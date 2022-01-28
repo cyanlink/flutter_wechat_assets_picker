@@ -114,6 +114,8 @@ class ProviderAggregate extends ChangeNotifier {
     selectedAssets = _set;
     provider.unSelectAsset(item);
   }
+
+  bool get isSelectedNotEmpty => _selectedAssets.isNotEmpty;
 }
 
 class ImageAssetProvider extends DAPP {
@@ -912,32 +914,32 @@ class NewCustomAssetPickerBuilderDelegate
   /// 当有资源已选时，点击按钮将把已选资源通过路由返回。
   @override
   Widget confirmButton(BuildContext context) {
-    return Consumer<DAPP>(
-      builder: (_, DAPP p, __) {
+    return Consumer<ProviderAggregate>(
+      builder: (_, ProviderAggregate pa, __) {
         return MaterialButton(
-          minWidth: p.isSelectedNotEmpty ? 48 : 20,
+          minWidth: pa.isSelectedNotEmpty ? 48 : 20,
           height: appBarItemHeight,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           disabledColor: theme.dividerColor,
-          color: p.isSelectedNotEmpty ? themeColor : theme.dividerColor,
+          color: pa.isSelectedNotEmpty ? themeColor : theme.dividerColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(3),
           ),
           child: ScaleText(
-            p.isSelectedNotEmpty && !isSingleAssetMode
+            pa.isSelectedNotEmpty && !isSingleAssetMode
                 ? '${textDelegate.confirm}'
-                    ' (${p.selectedAssets.length}/${p.maxAssets})'
+                    ' (${pa.selectedAssets.length}/${pa.maxAssets})'
                 : textDelegate.confirm,
             style: TextStyle(
-              color: p.isSelectedNotEmpty
+              color: pa.isSelectedNotEmpty
                   ? theme.textTheme.bodyText1?.color
                   : theme.textTheme.caption?.color,
               fontSize: 17,
               fontWeight: FontWeight.normal,
             ),
           ),
-          onPressed: p.isSelectedNotEmpty
-              ? () => Navigator.of(context).maybePop(p.selectedAssets)
+          onPressed: pa.isSelectedNotEmpty
+              ? () => Navigator.of(context).maybePop(pa.selectedAssets)
               : null,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         );
@@ -1330,16 +1332,16 @@ class NewCustomAssetPickerBuilderDelegate
 
   @override
   Widget previewButton(BuildContext context) {
-    final DAPP provider = context.watch<DAPP>();
+    final ProviderAggregate pa= context.watch<ProviderAggregate>();
 
     Future<void> _onTap() async {
       final List<AssetEntity> _selected;
       if (isWeChatMoment) {
-        _selected = provider.selectedAssets
+        _selected = pa.selectedAssets
             .where((AssetEntity e) => e.type == AssetType.image)
             .toList();
       } else {
-        _selected = provider.selectedAssets;
+        _selected = pa.selectedAssets;
       }
       final List<AssetEntity>? result = await AssetPickerViewer.pushToViewer(
         context,
@@ -1347,25 +1349,25 @@ class NewCustomAssetPickerBuilderDelegate
         previewAssets: _selected,
         previewThumbSize: previewThumbSize,
         selectedAssets: _selected,
-        selectorProvider: provider as DAPP,
+        selectorProvider: pa as DAPP,
         themeData: theme,
-        maxAssets: provider.maxAssets,
+        maxAssets: pa.maxAssets,
       );
       if (result != null) {
         Navigator.of(context).maybePop(result);
       }
     }
 
-    return Consumer<DAPP>(
-      builder: (_, DAPP p, Widget? child) => Semantics(
-        enabled: p.isSelectedNotEmpty,
+    return Consumer2<ProviderAggregate, DAPP>(
+      builder: (_, ProviderAggregate pa, DAPP p, Widget? child) => Semantics(
+        enabled: pa.isSelectedNotEmpty,
         focusable: p.isSwitchingPath,
         hidden: p.isSwitchingPath,
         onTapHint: textDelegate.sActionPreviewHint,
         child: child,
       ),
-      child: Selector<DAPP, bool>(
-        selector: (_, DAPP p) => p.isSelectedNotEmpty,
+      child: Selector<ProviderAggregate, bool>(
+        selector: (_, ProviderAggregate pa) => pa.isSelectedNotEmpty,
         builder: (_, bool isNotEmpty, __) => GestureDetector(
           onTap: isNotEmpty ? _onTap : null,
           child: Selector<DAPP, String>(
@@ -1374,7 +1376,7 @@ class NewCustomAssetPickerBuilderDelegate
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: ScaleText(
                 '${textDelegate.preview}'
-                '${isNotEmpty ? ' (${provider.selectedAssets.length})' : ''}',
+                '${isNotEmpty ? ' (${pa.selectedAssets.length})' : ''}',
                 style: TextStyle(
                   color: isNotEmpty ? null : theme.textTheme.caption?.color,
                   fontSize: 17,

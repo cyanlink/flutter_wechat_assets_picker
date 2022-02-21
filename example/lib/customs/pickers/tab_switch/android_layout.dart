@@ -16,14 +16,90 @@ import 'package:wechat_assets_picker/src/widget/scale_text.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 import 'file_pick_page.dart';
+import "package:wechat_camera_picker/wechat_camera_picker.dart";
 
-class AndroidLayoutWidget extends StatefulWidget {
+const _pageTabs = [
+  Tab(text: "文件"),
+  Tab(text: "拍摄"),
+];
+
+class AndroidLayout extends StatefulWidget {
   final NewCustomAssetPickerBuilderDelegate delegate;
 
-  const AndroidLayoutWidget(this.delegate);
+  const AndroidLayout(this.delegate, {Key? key}) : super(key: key);
 
   @override
-  State<AndroidLayoutWidget> createState() => _AndroidLayoutWidgetState();
+  State<AndroidLayout> createState() => _AndroidLayoutState();
+}
+
+class _AndroidLayoutState extends State<AndroidLayout>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  final PageController _pageController = PageController();
+
+  @override
+  initState() {
+    super.initState();
+    _tabController = TabController(length: _pageTabs.length, vsync: this)
+      ..addListener(() {
+        _pageController.animateToPage(_tabController.index,
+            curve: Curves.easeIn, duration: const Duration(milliseconds: 150));
+      });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              _tabController.index = index;
+            },
+            children: [
+              Consumer<ProviderAggregate>(
+                builder:
+                    (BuildContext context, ProviderAggregate pa, Widget? child) =>
+                        CNP<DAPP>.value(
+                  value: pa.selectedProvider,
+                  builder: (BuildContext context, _) => FixedAppBarWrapper(
+                    appBar: widget.delegate.appBar(context),
+                    body: Selector<DAPP, bool>(
+                      selector: (_, DAPP provider) => provider.hasAssetsToDisplay,
+                      builder: (_, bool hasAssetsToDisplay, __) {
+                        final bool shouldDisplayAssets = hasAssetsToDisplay ||
+                            (widget.delegate.allowSpecialItemWhenEmpty &&
+                                widget.delegate.specialItemPosition !=
+                                    SpecialItemPosition.none);
+                        return AnimatedSwitcher(
+                          duration: widget.delegate.switchingPathDuration,
+                          child: shouldDisplayAssets
+                              ? SelectFilePage(widget.delegate)
+                              : widget.delegate.loadingIndicator(context),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              CameraPicker(),
+            ],
+          ),
+        ),
+        TabBar(tabs: _pageTabs, controller: _tabController),
+      ],
+    );
+  }
+}
+
+class SelectFilePage extends StatefulWidget {
+  final NewCustomAssetPickerBuilderDelegate delegate;
+
+  const SelectFilePage(this.delegate, {Key? key}) : super(key: key);
+
+  @override
+  State<SelectFilePage> createState() => _SelectFilePageState();
 }
 
 const Map<int, RequestType> _map = {
@@ -31,17 +107,22 @@ const Map<int, RequestType> _map = {
   1: RequestType.video,
   2: RequestType.image
 };
+const _tabs = [
+  Tab(text: "全部"),
+  Tab(text: "视频"),
+  Tab(text: "图片"),
+];
 
-class _AndroidLayoutWidgetState extends State<AndroidLayoutWidget>
-    with TickerProviderStateMixin {
-  late final TabController _controller;
+class _SelectFilePageState extends State<SelectFilePage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _controller = TabController(length: 3, vsync: this)
+    _tabController = TabController(length: _tabs.length, vsync: this)
       ..addListener(() {
-        final int index = _controller.index;
+        final int index = _tabController.index;
         final ProviderAggregate pa = context.read<ProviderAggregate>();
         pa.requestType = _map[index]!;
       });
@@ -57,16 +138,12 @@ class _AndroidLayoutWidgetState extends State<AndroidLayoutWidget>
             builder: (BuildContext context, ProviderAggregate pa, _) => Column(
               children: <Widget>[
                 TabBar(
-                  controller: _controller,
-                  tabs: const [
-                    Tab(text: "全部"),
-                    Tab(text: "视频"),
-                    Tab(text: "图片"),
-                  ],
+                  controller: _tabController,
+                  tabs: _tabs,
                 ),
                 Expanded(
                   child: TabBarView(
-                    controller: _controller,
+                    controller: _tabController,
                     children: [
                       CNP<DAPP>.value(
                         value: pa.common,

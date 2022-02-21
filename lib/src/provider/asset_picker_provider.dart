@@ -238,6 +238,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   /// 切换路径
   Future<void> switchPath([Path? pathEntity]);
 }
+typedef DAPP = DefaultAssetPickerProvider;
 
 class DefaultAssetPickerProvider
     extends AssetPickerProvider<AssetEntity, AssetPathEntity> {

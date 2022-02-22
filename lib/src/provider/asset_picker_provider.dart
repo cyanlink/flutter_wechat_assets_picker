@@ -2,6 +2,7 @@
 /// [Author] Alex (https://github.com/Alex525)
 /// [Date] 2020/3/31 15:28
 ///
+import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -304,10 +305,12 @@ class DefaultAssetPickerProvider
       options.merge(filterOptions!);
     }
 
+    final Stopwatch watch = Stopwatch()..start();
     final List<AssetPathEntity> _list = await PhotoManager.getAssetPathList(
       type: requestType,
       filterOption: options,
     );
+    log('getPaths execution time: ${watch.elapsedMilliseconds}');
 
     // Sort path using sort path delegate.
     Constants.sortPathDelegate.sort(_list);
@@ -344,10 +347,12 @@ class DefaultAssetPickerProvider
 
   @override
   Future<void> getAssetsFromEntity(int page, AssetPathEntity pathEntity) async {
+    final Stopwatch watch = Stopwatch()..start();
     final List<AssetEntity> list = await pathEntity.getAssetListPaged(
       page: page,
       size: pageSize,
     );
+    log('getPaths execution time: ${watch.elapsedMilliseconds}');
     _currentAssets = List<AssetEntity>.of(list);
     _hasAssetsToDisplay = currentAssets.isNotEmpty;
     notifyListeners();

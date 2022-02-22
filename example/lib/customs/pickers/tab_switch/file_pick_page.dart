@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:provider/single_child_widget.dart';
 import 'package:wechat_assets_picker/src/constants/constants.dart';
 import 'package:wechat_assets_picker/src/constants/extensions.dart';
 import 'package:wechat_assets_picker/src/widget/fixed_appbar.dart';
@@ -35,11 +34,11 @@ Future<List<AssetEntity>?> newCustomPick(BuildContext context, List<AssetEntity>
     initialPermission: PermissionState.notDetermined,
   );
 
-  final DAPP iap = DAPP(requestType: RequestType.image);
-  final DAPP vap = DAPP(requestType: RequestType.video);
-  final DAPP cap = DAPP(requestType: RequestType.common);
+  DAPP iap ()=>DAPP(requestType: RequestType.image);
+  DAPP vap ()=>DAPP(requestType: RequestType.video);
+  DAPP cap ()=>DAPP(requestType: RequestType.common);
   final ProviderAggregate pa =
-  ProviderAggregate(image: iap, video: vap, common: cap);
+  ProviderAggregate(imageBuilder: iap, videoBuilder: vap, commonBuilder: cap);
   pa.selectedAssets = selectedAssets;
   return AssetPickerExtension.pickAssetsWithDelegateAggregatedProvider(
     context,
@@ -48,29 +47,43 @@ Future<List<AssetEntity>?> newCustomPick(BuildContext context, List<AssetEntity>
   );
 }
 
+typedef DAPPBuilder = DAPP Function();
 class ProviderAggregate extends ChangeNotifier {
   ProviderAggregate(
-      {required this.image,
-        required this.video,
-        required this.common,
+      {required this.imageBuilder,
+        required this.videoBuilder,
+        required this.commonBuilder,
         this.maxAssets = 9,}) {
-    _map = Map<RequestType, DAPP>.unmodifiable(<RequestType, DAPP>{
+    /*_map = Map<RequestType, DAPP>.unmodifiable(<RequestType, DAPP>{
       RequestType.common: common,
       RequestType.video: video,
       RequestType.image: image
-    });
-
+    });*/
   }
 
-  DAPP image;
-  DAPP video;
-  DAPP common;
+  Future initPathAndAsset()async{
+    await common.initPathAndAsset();
+    image.initPathAndAsset();
+    video.initPathAndAsset();
+  }
+
+  DAPPBuilder imageBuilder;
+  DAPPBuilder videoBuilder;
+  DAPPBuilder commonBuilder;
+
+  DAPP? _image;
+  DAPP? _video;
+  DAPP? _common;
+
+  DAPP get image=>_image??=imageBuilder();
+  DAPP get video => _video??=videoBuilder();
+  DAPP get common => _common??=commonBuilder();
 
   int maxAssets;
 
   RequestType _type = RequestType.common;
 
-  late final Map<RequestType, DAPP> _map;
+  //late final Map<RequestType, DAPP> _map;
 
   RequestType get requestType => _type;
 
@@ -84,7 +97,14 @@ class ProviderAggregate extends ChangeNotifier {
   }
 
   ///To change it, set [requestType].
-  DAPP get selectedProvider => _map[_type]!;
+  DAPP get selectedProvider {
+    DAPP? p;
+    if(requestType == RequestType.common)p = common;
+    if(requestType == RequestType.image) p = image;
+    if(requestType == RequestType.video) p = video;
+    p ??= common;
+    return p;
+  }
 
   List<AssetEntity> _selectedAssets = <AssetEntity>[];
 
@@ -170,11 +190,11 @@ extension AssetPickerExtension on AssetPicker {
     );
     List<Asset>? list;
     if(result is Asset) {
-      list = [result];
-    }else if(result is List<Asset>){
-    list = result;
+      list = <Asset>[result];
+    }else{
+    list = result as List<Asset>;
     }
-    return list!;
+    return list;
   }
 }
 

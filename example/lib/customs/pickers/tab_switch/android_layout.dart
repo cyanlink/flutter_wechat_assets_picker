@@ -46,6 +46,12 @@ class _AndroidLayoutState extends State<AndroidLayout>
             curve: Curves.easeIn, duration: const Duration(milliseconds: 150));
       });
   }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final pa = context.read<ProviderAggregate>();
+    pa.initPathAndAsset();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +71,7 @@ class _AndroidLayoutState extends State<AndroidLayout>
                   value: pa.selectedProvider,
                   builder: (BuildContext context, _) => FixedAppBarWrapper(
                     appBar: widget.delegate.appBar(context),
-                    body: Selector<DAPP, bool>(
+                    body: SelectFilePage(widget.delegate)/*Selector<DAPP, bool>(
                       selector: (_, DAPP provider) => provider.hasAssetsToDisplay,
                       builder: (_, bool hasAssetsToDisplay, __) {
                         final bool shouldDisplayAssets = hasAssetsToDisplay ||
@@ -79,7 +85,7 @@ class _AndroidLayoutState extends State<AndroidLayout>
                               : widget.delegate.loadingIndicator(context),
                         );
                       },
-                    ),
+                    ),*/
                   ),
                 ),
               ),
@@ -147,15 +153,15 @@ class _SelectFilePageState extends State<SelectFilePage>
                     children: [
                       CNP<DAPP>.value(
                         value: pa.common,
-                        child: delegate.assetsGridBuilder(context),
+                        child: AssetGridWidget(delegate, key:const ValueKey("common"),),
                       ),
                       CNP<DAPP>.value(
                         value: pa.video,
-                        child: delegate.assetsGridBuilder(context),
+                        child: AssetGridWidget(delegate, key: const ValueKey("video")),
                       ),
                       CNP<DAPP>.value(
                         value: pa.image,
-                        child: delegate.assetsGridBuilder(context),
+                        child: AssetGridWidget(delegate, key: const ValueKey("image")),
                       ),
                     ],
                   ),
@@ -169,6 +175,36 @@ class _SelectFilePageState extends State<SelectFilePage>
         delegate.pathEntityListBackdrop(context),
         delegate.pathEntityListWidget(context),
       ],
+    );
+  }
+}
+
+class AssetGridWidget extends StatefulWidget{
+  const AssetGridWidget(this.delegate, {Key? key}) : super(key: key);
+  final NewCustomAssetPickerBuilderDelegate delegate;
+
+  @override
+  State<AssetGridWidget> createState() => _AssetGridWidgetState();
+}
+
+class _AssetGridWidgetState extends State<AssetGridWidget> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<DAPP, bool>(
+      selector: (_, DAPP provider) => provider.hasAssetsToDisplay,
+      builder: (_, bool hasAssetsToDisplay, __) {
+        final bool shouldDisplayAssets = hasAssetsToDisplay ||
+            (widget.delegate.allowSpecialItemWhenEmpty &&
+                widget.delegate.specialItemPosition !=
+                    SpecialItemPosition.none);
+        return AnimatedSwitcher(
+          duration: widget.delegate.switchingPathDuration,
+          child: shouldDisplayAssets
+              ? widget.delegate.assetsGridBuilder(context)
+              : widget.delegate.loadingIndicator(context),
+        );
+      },
     );
   }
 }

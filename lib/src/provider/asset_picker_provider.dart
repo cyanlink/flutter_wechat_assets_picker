@@ -261,13 +261,18 @@ class DefaultAssetPickerProvider
           selectedAssets: selectedAssets,
         ) {
     Constants.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
-    Future<void>.delayed(routeDuration).then(
+    /*Future<void>.delayed(routeDuration).then(
       (dynamic _) async {
         await getAssetPathList();
         await getAssetList();
       },
-    );
+    );*/
   }
+
+  Future<void> initPathAndAsset()async{
+    await getAssetPathList();
+    await getAssetList();
+}
 
   /// Request assets type.
   /// 请求的资源类型
